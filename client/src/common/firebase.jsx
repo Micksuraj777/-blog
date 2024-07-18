@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { GoogleAuthProvider ,getAuth ,signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, getAuth, signInWithPopup } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDe6tQmznJ5qn9qPDOXKeLaI7bGuioy7ww",
@@ -11,32 +11,15 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
-//google auth
-
 const provider = new GoogleAuthProvider();
-
 const auth = getAuth();
 
 export const authWithGoogle = async () => {
-
-    let user = null;
-
-    await signInWithPopup(auth, provider)
-    .then((result) => {
-        user = result.user;
-    })
-    .catch((error) => {
-        console.log(error);
-    });
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error) {
+    console.error("Google sign-in error: ", error);
+    throw error;
+  }
 };
-
-
-
-
-
-
-
-
-
-

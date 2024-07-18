@@ -13,14 +13,11 @@ const UserAuthForm = ({ type }) => {
   const { userAuth: { access_token }, setUserAuth } = useContext(UserContext);
   const formElement = useRef(null);
 
-  console.log(access_token);
-
   const userAuthThroughServer = (serverRoute, formData) => {
     axios.post(import.meta.env.VITE_SERVER_DOMAIN + serverRoute, formData)
       .then(({ data }) => {
         storeInSession("user", JSON.stringify(data));
         setUserAuth(data);
-        // console.log(sessionStorage);
       })
       .catch(({ response }) => {
         toast.error(response.data.error);
@@ -49,7 +46,6 @@ const UserAuthForm = ({ type }) => {
 
     let { fullname, email, password } = formData;
 
-    // Form validation
     if (fullname && fullname.length < 3) {
       return toast.error("Fullname must be at least 3 letters long");
     }
@@ -69,23 +65,19 @@ const UserAuthForm = ({ type }) => {
     userAuthThroughServer(serverRoute, formData);
   };
 
-  const handleGoogleAuth = (e) => {
+  const handleGoogleAuth = async (e) => {
     e.preventDefault();
-    authWithGoogle().then(user=>{
-      
+    try {
+      const user = await authWithGoogle();
+      if (user) {
         let serverRoute = "/google-auth";
-
-        let formData = {
-          access_token: user.accessToken
-        };
-
+        let formData = { access_token: await user.getIdToken() };
         userAuthThroughServer(serverRoute, formData);
-
-    })
-    .catch(err=>{
-      toast.error("trouble signing in with google");
-      return console.log(err);
-    });
+      }
+    } catch (error) {
+      toast.error("Trouble signing in with Google");
+      console.error(error);
+    }
   };
 
   return (
@@ -124,34 +116,28 @@ const UserAuthForm = ({ type }) => {
               onClick={handleSubmit}>
               {type.replace('-', ' ')}
             </button>
-            <div className='relative w-full flex gap-2 my-10 opacity-10 up text-bl font-bold items-center'>
+            <div className='relative w-full flex gap-2 my-10 opacity-10 up text-black font-bold items-center'>
               <hr className='w-1/2 border-black' />
               <p>or</p>
               <hr className='w-1/2 border-black' />
             </div>
-            <button className='btn-dark flex items-center justify-center gap-4 w-[90%] center' onClick={handleGoogleAuth}>
-              <img src={Google} alt="googleicon" className='w-5' />
-              continue with google
+            <button className='btn-dark flex items-center justify-center gap-4 w-[90%] center'
+              onClick={handleGoogleAuth}>
+              <img src={Google} className='w-6' alt='google logo' /> <span>Continue with Google</span>
             </button>
             {type === "sign-in" ?
-              <p className='mt-6 text-dark-grey text-xl text-center'>
-                Don't have an account?
-                <Link to='/signup' className='underline text-black text-xl ml-1'>
-                  Join us today
-                </Link>
+              <p className='mt-7 text-black text-center text-sm'>
+                Not a member? <Link to="/sign-up" className='font-bold underline'>Join us today</Link>
               </p>
               :
-              <p className='mt-6 text-dark-grey text-xl text-center'>
-                Already a member?
-                <Link to='/signin' className='underline text-black text-xl ml-1'>
-                  Sign in here.
-                </Link>
+              <p className='mt-7 text-black text-center text-sm'>
+                Already a member? <Link to="/sign-in" className='font-bold underline'>Sign in instead</Link>
               </p>
             }
           </form>
         </section>
       </AnimationWrapper>
-  );
-};
+  )
+}
 
 export default UserAuthForm;
